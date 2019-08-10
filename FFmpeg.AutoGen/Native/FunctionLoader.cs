@@ -33,9 +33,7 @@ namespace FFmpeg.AutoGen.Native
                 return default(T);
             }
 
-#if NET45
-            return (T)(object)Marshal.GetDelegateForFunctionPointer(ptr, typeof(T));
-#else
+#if NETSTANDARD
             try
             {
                 return Marshal.GetDelegateForFunctionPointer<T>(ptr);
@@ -46,26 +44,14 @@ namespace FFmpeg.AutoGen.Native
                     throw;
                 return default(T);
             }
+#else
+            return (T)(object)Marshal.GetDelegateForFunctionPointer(ptr, typeof(T));
 #endif
         }
 
         private static IntPtr GetFunctionPointer(IntPtr nativeLibraryHandle, string functionName)
         {
-#if NET45
-                switch (LibraryLoader.GetPlatformId())
-                {
-                case PlatformID.MacOSX:
-                        return MacNativeMethods.dlsym(nativeLibraryHandle, functionName);
-                case PlatformID.Unix:
-                        return LinuxNativeMethods.dlsym(nativeLibraryHandle, functionName);
-                case PlatformID.Win32NT:
-                    case PlatformID.Win32S:
-                    case PlatformID.Win32Windows:
-                        return WindowsNativeMethods.GetProcAddress(nativeLibraryHandle, functionName);
-                default:
-                        throw new PlatformNotSupportedException();
-                }
-#else
+#if NETSTANDARD
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 return LinuxNativeMethods.dlsym(nativeLibraryHandle, functionName);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
@@ -73,6 +59,22 @@ namespace FFmpeg.AutoGen.Native
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return WindowsNativeMethods.GetProcAddress(nativeLibraryHandle, functionName);
             throw new PlatformNotSupportedException();
+              
+#else
+            switch (LibraryLoader.GetPlatformId())
+            {
+                case PlatformID.MacOSX:
+                    return MacNativeMethods.dlsym(nativeLibraryHandle, functionName);
+                case PlatformID.Unix:
+                    return LinuxNativeMethods.dlsym(nativeLibraryHandle, functionName);
+                case PlatformID.Win32NT:
+                case PlatformID.Win32S:
+                case PlatformID.Win32Windows:
+                    return WindowsNativeMethods.GetProcAddress(nativeLibraryHandle, functionName);
+                default:
+                    throw new PlatformNotSupportedException();
+            }
+
 #endif
         }
     }

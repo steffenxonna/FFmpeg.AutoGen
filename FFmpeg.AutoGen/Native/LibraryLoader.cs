@@ -12,17 +12,21 @@ namespace FFmpeg.AutoGen.Native
 
     public static class LibraryLoader
     {
+        public static GetPlatformId GetPlatformId;
+
+        public static GetNativeLibraryName GetNativeLibraryName;
+
         static LibraryLoader()
         {
             GetPlatformId = () =>
             {
-#if NET45
-                return Environment.OSVersion.Platform;
-#else
+#if NETSTANDARD
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return PlatformID.Win32NT;
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) return PlatformID.Unix;
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) return PlatformID.MacOSX;
                 throw new PlatformNotSupportedException();
+#else
+                return Environment.OSVersion.Platform;
 #endif
             };
 
@@ -43,10 +47,6 @@ namespace FFmpeg.AutoGen.Native
                 }
             };
         }
-
-        public static GetPlatformId GetPlatformId;
-
-        public static GetNativeLibraryName GetNativeLibraryName;
 
         /// <summary>
         ///     Attempts to load a native library using platform nammig convention.
